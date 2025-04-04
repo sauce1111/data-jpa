@@ -7,6 +7,7 @@ import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
@@ -25,4 +26,14 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     @Query("select new study.datajpa.dto.MemberDto(m.id, m.username, t.name) from Member m join m.team t")
     List<MemberDto> findMemberDto();
+
+    @Query("select m from Member m where m.username in :names")
+    List<Member> findByNames(@Param("names") List<String> names);
+
+    // 컬렉션 - 조회결과 없을 때 빈 리스트를 반환
+    List<Member> findListByUsername(String username);
+    // 단건 - 조회결과 없을 때 Null 반환
+    Member findMemberByUsername(String username);
+    // optional - null 일 가능성이 있다면, optional 로 받자
+    Optional<Member> findOptionalByUsername(String username);
 }

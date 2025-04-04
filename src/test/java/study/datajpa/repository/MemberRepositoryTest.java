@@ -3,12 +3,17 @@ package study.datajpa.repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
 import study.datajpa.entity.Team;
 
+import javax.print.attribute.standard.PageRanges;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -155,10 +160,31 @@ class MemberRepositoryTest {
         List<Member> list = memberRepository.findListByUsername("aaa");
         Member findMember = memberRepository.findMemberByUsername("aaa");
         Optional<Member> optional = memberRepository.findOptionalByUsername("aaa");
-
-
-
     }
 
+    @Test
+    void paging() {
+        memberRepository.save(new Member("mamber1", 10));
+        memberRepository.save(new Member("mamber2", 10));
+        memberRepository.save(new Member("mamber3", 10));
+        memberRepository.save(new Member("mamber4", 10));
+        memberRepository.save(new Member("mamber5", 10));
 
+        int age = 10;
+        PageRequest pageRequest = PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "username"));
+
+        Page<Member> page = memberRepository.findByAge(age, pageRequest);
+
+        // dto 로 변환해서 반환하자.
+        Page<MemberDto> memberDtos = page.map(m -> new MemberDto(m.getId(), m.getUsername(), null));
+
+        List<Member> content = page.getContent();
+
+        assertThat(content.size()).isEqualTo(3);
+        assertThat(page.getTotalElements()).isEqualTo(5);
+        assertThat(page.getNumber()).isEqualTo(0);
+        assertThat(page.getTotalPages()).isEqualTo(2);
+        assertThat(page.isFirst()).isTrue();
+        assertThat(page.hasNext()).isTrue();
+    }
 }

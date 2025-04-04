@@ -1,5 +1,7 @@
 package study.datajpa.repository;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,6 +31,8 @@ class MemberRepositoryTest {
     MemberRepository memberRepository;
     @Autowired
     TeamRepository teamRepository;
+    @PersistenceContext
+    EntityManager em;
 
     @Test
     void testMember() {
@@ -187,4 +191,56 @@ class MemberRepositoryTest {
         assertThat(page.isFirst()).isTrue();
         assertThat(page.hasNext()).isTrue();
     }
+
+    @Test
+    void testBulkAgePlus() {
+        memberRepository.save(new Member("mamber1", 10));
+        memberRepository.save(new Member("mamber2", 19));
+        memberRepository.save(new Member("mamber3", 20));
+        memberRepository.save(new Member("mamber4", 21));
+        memberRepository.save(new Member("mamber5", 40));
+
+        // 직접 DB에 update 쿼리를 날리는거라 영속성 컨텍스트 초기화가 필요함
+        int resultCount = memberRepository.bulkAgePlus(20);
+//        em.clear();
+
+        assertThat(resultCount).isEqualTo(3);
+    }
+
+    @Test
+    void findMemberLazy() {
+        Team teamA = new Team("teamA");
+        Team teamB = new Team("teamB");
+        teamRepository.save(teamA);
+        teamRepository.save(teamB);
+
+        Member member1 = new Member("member1", 10, teamA);
+        Member member2 = new Member("member2", 10, teamB);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        em.flush();
+        em.clear();
+
+        List<Member> members = memberRepository.findEntityGraphByUsername("member1");
+
+        for (Member member : members) {
+            System.out.println("member username = " + member.getUsername());
+            System.out.println("member.team = " + member.getTeam().getName());
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
